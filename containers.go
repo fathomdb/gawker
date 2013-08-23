@@ -109,9 +109,18 @@ func readContainerInfo(path string) (*ContainerInfo, error) {
     return c, nil
 }
 
+// Import of 1.1 function
+// TODO: Replace with strings.TrimPrefix
+func trimPrefix(s, prefix string) string {
+    if strings.HasPrefix(s, prefix) {
+        return s[len(prefix):]
+    }
+    return s
+}
+
 func injectFiles(rootfs string, config *ContainerInfo) error {
     for _, inject := range config.InjectFiles {
-        relpath := strings.TrimPrefix(inject.Path, "/")
+        relpath := trimPrefix(inject.Path, "/")
         abspath := filepath.Join(rootfs, relpath)
 
         // Check for relative path attacks (e.g. ../../etc/passwd)
