@@ -55,6 +55,10 @@ func ParseWithConfigurationFile(f *flag.FlagSet, confFileVar *string) {
                     continue
                 }
 
+                if strings.HasPrefix(line, "#") {
+                    continue
+                }
+
                 if !strings.HasPrefix(line, "--") {
                     line = "--" + line
                 }
