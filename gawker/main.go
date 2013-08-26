@@ -40,6 +40,12 @@ func main() {
         "/var/run/gawker.pid",
         "pidfile to create")
 
+    var logfile string
+    flags.StringVar(&logfile,
+        "logfile",
+        "/var/log/gawker.log",
+        "logfile to create to create")
+
     var listenAddresses string
     flags.StringVar(&listenAddresses,
         "listen",
@@ -47,6 +53,12 @@ func main() {
         "Address(es) on which to listen")
 
     gawker.ParseWithConfigurationFile(flags, &confFile)
+
+    logf, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+    if err != nil {
+        log.Fatalln("Cannot open log file", err)
+    }
+    log.SetOutput(logf)
 
     runtime, err := gawker.NewRuntime(confdir, workdir)
 
