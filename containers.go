@@ -102,9 +102,12 @@ func (s *ContainerManager) GetContainerInfo(key string) (*ContainerInfo, error) 
 
 func readContainerInfo(path string) (*ContainerInfo, error) {
     c := &ContainerInfo{}
-    err := gommons.ReadJson(path, c)
+    found, err := gommons.ReadJson(path, c)
     if err != nil {
         return nil, err
+    }
+    if !found {
+        return nil, nil
     }
     return c, nil
 }
@@ -268,6 +271,10 @@ func (s *ContainerManager) StartContainer(name string) (err error) {
         return err
     }
 
+    if container == nil {
+        return Build404("container")
+    }
+
     proc := &processes.WatchedProcessConfig{}
     proc.Name = "/usr/bin/lxc-start"
 
@@ -288,16 +295,20 @@ func (s *ContainerManager) StartContainer(name string) (err error) {
     return nil
 }
 
-func (s *ContainerManager) StopContainer(name string) (err error) {
+func (s *ContainerManager) StopContainer(name string) (deleted bool, err error) {
     container, err := s.GetContainerInfo(name)
     if err != nil {
-        return err
+        return false, err
+    }
+
+    if container == nil {
+        return false, nil
     }
 
     err = s.runtime.Processes.DeleteProcess("vm-" + container.Key)
     if err != nil {
-        return err
+        return false, err
     }
 
-    return nil
+    return true, nil
 }

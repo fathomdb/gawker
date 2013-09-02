@@ -17,20 +17,31 @@ const DEFAULTHTTPHOST string = "127.0.0.1"
 
 //const DEFAULTHTTPPORT int = 4243
 
+func Build404(key string) (err error) {
+    return fmt.Errorf("No such %s", key)
+}
+
 func httpError(w http.ResponseWriter, err error) {
     if strings.HasPrefix(err.Error(), "No such") {
+        log.Printf("Returning error as StatusNotFound: %s", err.Error())
         http.Error(w, err.Error(), http.StatusNotFound)
     } else if strings.HasPrefix(err.Error(), "Bad parameter") {
+        log.Printf("Returning error as StatusBadRequest: %s", err.Error())
         http.Error(w, err.Error(), http.StatusBadRequest)
     } else if strings.HasPrefix(err.Error(), "Conflict") {
+        log.Printf("Returning error as StatusConflict: %s", err.Error())
         http.Error(w, err.Error(), http.StatusConflict)
     } else if strings.HasPrefix(err.Error(), "Impossible") {
+        log.Printf("Returning error as StatusNotAcceptable: %s", err.Error())
         http.Error(w, err.Error(), http.StatusNotAcceptable)
     } else if strings.HasPrefix(err.Error(), "Wrong login/password") {
+        log.Printf("Returning error as StatusUnauthorized: %s", err.Error())
         http.Error(w, err.Error(), http.StatusUnauthorized)
     } else if strings.Contains(err.Error(), "hasn't been activated") {
+        log.Printf("Returning error as StatusForbidden: %s", err.Error())
         http.Error(w, err.Error(), http.StatusForbidden)
     } else {
+        log.Printf("Returning error as StatusInternalServerError: %s", err.Error())
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
 }
@@ -136,12 +147,16 @@ func getContainerInfo(srv *Server, w http.ResponseWriter, r *http.Request, vars 
 
     name := vars["name"]
 
-    outs, err := srv.Runtime.Containers.GetContainerInfo(name)
+    c, err := srv.Runtime.Containers.GetContainerInfo(name)
     if err != nil {
         return err
     }
 
-    b, err := json.Marshal(outs)
+    if c == nil {
+        return Build404("container")
+    }
+
+    b, err := json.Marshal(c)
     if err != nil {
         return err
     }
@@ -193,9 +208,13 @@ func stopContainer(srv *Server, w http.ResponseWriter, r *http.Request, vars map
 
     name := vars["name"]
 
-    err := srv.Runtime.Containers.StopContainer(name)
+    deleted, err := srv.Runtime.Containers.StopContainer(name)
     if err != nil {
         return err
+    }
+
+    if !deleted {
+        return Build404("container")
     }
 
     w.WriteHeader(http.StatusOK)

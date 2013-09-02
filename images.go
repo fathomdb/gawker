@@ -36,7 +36,6 @@ func (s *ImageManager) GetImageInfo(key string) (*ImageInfo, error) {
         log.Printf("Error reading image info %s %v", infopath, err)
         return nil, err
     }
-
     return info, nil
 }
 
@@ -62,9 +61,12 @@ func (s *ImageManager) getArchivePath(key string) (string, error) {
 
 func readImageInfo(path string) (*ImageInfo, error) {
     c := &ImageInfo{}
-    err := gommons.ReadJson(path, c)
+    found, err := gommons.ReadJson(path, c)
     if err != nil {
         return nil, err
+    }
+    if !found {
+        return nil, nil
     }
     return c, nil
 }
