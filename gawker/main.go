@@ -5,15 +5,9 @@ import (
     "github.com/fathomdb/gawker"
     "log"
     "os"
-    "strings"
 )
 
-//import _ "net/http/pprof"
-
 func main() {
-    //go http.ListenAndServe(":6060", nil)
-    //	var err error
-
     flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
     var confFile string
@@ -26,7 +20,7 @@ func main() {
     flags.StringVar(&workdir,
         "workdir",
         "/var/gawker",
-        "Working directory")
+        "Working directory (for log & pid files)")
 
     var confdir string
     flags.StringVar(&confdir,
@@ -44,13 +38,7 @@ func main() {
     flags.StringVar(&logfile,
         "logfile",
         "/var/log/gawker.log",
-        "logfile to create to create")
-
-    var listenAddresses string
-    flags.StringVar(&listenAddresses,
-        "listen",
-        "tcp://127.0.0.1:777",
-        "Address(es) on which to listen")
+        "Main log file to create")
 
     gawker.ParseWithConfigurationFile(flags, &confFile)
 
@@ -66,8 +54,8 @@ func main() {
         log.Panicf("Error initializing %v", err)
     }
 
-    err = runtime.Listen(pidfile, strings.Split(listenAddresses, ","))
+    err = runtime.Run(pidfile)
     if err != nil {
-        log.Panicf("Error from listeners: %v", err)
+        log.Panicf("Error while running: %v", err)
     }
 }

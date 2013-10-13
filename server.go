@@ -8,8 +8,8 @@ import (
     "os"
     "os/signal"
     "strconv"
-    "strings"
     "syscall"
+    "time"
 )
 
 func (srv *Server) GetProcesses() []*processes.WatchedProcessInfo {
@@ -48,7 +48,7 @@ func removePidFile(pidfile string) {
     }
 }
 
-func (r *Runtime) Listen(pidfile string, listenAddresses []string) error {
+func (r *Runtime) Run(pidfile string) error {
     if err := createPidFile(pidfile); err != nil {
         log.Fatal(err)
     }
@@ -62,33 +62,11 @@ func (r *Runtime) Listen(pidfile string, listenAddresses []string) error {
         removePidFile(pidfile)
         os.Exit(0)
     }()
-    server, err := NewServer(r)
-    if err != nil {
-        return err
+
+    for {
+        time.Sleep(10 * time.Second)
     }
-    chErrors := make(chan error, len(listenAddresses))
-    for _, listenAddress := range listenAddresses {
-        listenAddressParts := strings.SplitN(listenAddress, "://", 2)
-        if listenAddressParts[0] == "unix" {
-            syscall.Unlink(listenAddressParts[1])
-        } else if listenAddressParts[0] == "tcp" {
-            if !strings.HasPrefix(listenAddressParts[1], "127.0.0.1") {
-                log.Panic("Binding on anything other than 127.0.0.1 is blocked for security reasons")
-            }
-        } else {
-            log.Fatalf("Invalid protocol format: %s", listenAddress)
-            os.Exit(-1)
-        }
-        go func() {
-            chErrors <- ListenAndServe(listenAddressParts[0], listenAddressParts[1], server, true)
-        }()
-    }
-    for i := 0; i < len(listenAddresses); i += 1 {
-        err := <-chErrors
-        if err != nil {
-            return err
-        }
-    }
+
     return nil
 }
 

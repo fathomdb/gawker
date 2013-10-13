@@ -5,9 +5,7 @@ import (
 )
 
 type Runtime struct {
-    Processes  *processes.WatchedProcessManager
-    Containers *ContainerManager
-    Images     *ImageManager
+    Processes *processes.WatchedProcessManager
 
     ConfDir string
     WorkDir string
@@ -24,9 +22,6 @@ func NewRuntime(confdir, workdir string) (*Runtime, error) {
     if err != nil {
         return nil, err
     }
-
-    runtime.Containers = NewContainerManager(runtime)
-    runtime.Images = NewImageManager(runtime)
 
     return runtime, nil
 }
